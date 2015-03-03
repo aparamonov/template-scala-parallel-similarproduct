@@ -6,53 +6,27 @@ import predictionio
 import argparse
 import random
 
+DATA_DELIMITER = "::"
 SEED = 3
 
-def import_events(client):
+def import_events(client, file):
+  f = open(file, 'r')
   random.seed(SEED)
   count = 0
   print client.get_status()
   print "Importing data..."
 
-  # generate 10 users, with user ids u1,u2,....,u10
-  user_ids = ["u%s" % i for i in range(1, 11)]
-  for user_id in user_ids:
-    print "Set user", user_id
-    client.create_event(
-      event="$set",
-      entity_type="user",
-      entity_id=user_id
-    )
-    count += 1
-
-  # generate 50 items, with item ids i1,i2,....,i50
-  # random assign 1 to 4 categories among c1-c6 to items
-  categories = ["c%s" % i for i in range(1, 7)]
-  item_ids = ["i%s" % i for i in range(1, 51)]
-  for item_id in item_ids:
-    print "Set item", item_id
-    client.create_event(
-      event="$set",
-      entity_type="item",
-      entity_id=item_id,
-      properties={
-        "categories" : random.sample(categories, random.randint(1, 4))
-      }
-    )
-    count += 1
-
   # each user randomly viewed 10 items
-  for user_id in user_ids:
-    for viewed_item in random.sample(item_ids, 10):
-      print "User", user_id ,"views item", viewed_item
-      client.create_event(
-        event="view",
-        entity_type="user",
-        entity_id=user_id,
-        target_entity_type="item",
-        target_entity_id=viewed_item
-      )
-      count += 1
+  for line in f:
+    data = line.rstrip('\n').split(DATA_DELIMITER)
+    client.create_event(
+      event="view",
+      entity_type="user",
+      entity_id=data[0],
+      target_entity_type="item",
+      target_entity_id=data[1]
+    )
+    count += 1
 
   print "%s events are imported." % count
 
@@ -61,6 +35,7 @@ if __name__ == '__main__':
     description="Import sample data for similar product engine")
   parser.add_argument('--access_key', default='invald_access_key')
   parser.add_argument('--url', default="http://localhost:7070")
+  parser.add_argument('--file', default="./data/sample_data.txt")
 
   args = parser.parse_args()
   print args
@@ -70,4 +45,4 @@ if __name__ == '__main__':
     url=args.url,
     threads=5,
     qsize=500)
-  import_events(client)
+  import_events(client, args.file)
