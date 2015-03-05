@@ -50,16 +50,12 @@ class ALSAlgorithm(val ap: ALSAlgorithmParams)
       s"viewEvents in PreparedData cannot be empty." +
       " Please check if DataSource generates TrainingData" +
       " and Preprator generates PreparedData correctly.")
-    require(!data.users.take(1).isEmpty,
-      s"users in PreparedData cannot be empty." +
-      " Please check if DataSource generates TrainingData" +
-      " and Preprator generates PreparedData correctly.")
     require(!data.items.take(1).isEmpty,
       s"items in PreparedData cannot be empty." +
       " Please check if DataSource generates TrainingData" +
       " and Preprator generates PreparedData correctly.")
     // create User and item's String ID to integer index BiMap
-    val userStringIntMap = BiMap.stringInt(data.users.keys)
+    val userStringIntMap = BiMap.stringInt(data.viewEvents.map(_.user))
     val itemStringIntMap = BiMap.stringInt(data.items.keys)
 
     // collect Item as Map and convert ID to Int index
@@ -70,12 +66,12 @@ class ALSAlgorithm(val ap: ALSAlgorithmParams)
     val mllibRatings = data.viewEvents
       .map { r =>
         // Convert user and item String IDs to Int index for MLlib
-        val uindex = userStringIntMap.getOrElse(r.user, -1)
-        val iindex = itemStringIntMap.getOrElse(r.item, -1)
+      val uindex = userStringIntMap.getOrElse(r.user, -1)
+      val iindex = itemStringIntMap.getOrElse(r.item, -1)
 
-        if (uindex == -1)
-          logger.info(s"Couldn't convert nonexistent user ID ${r.user}"
-            + " to Int index.")
+      if (uindex == -1)
+        logger.info(s"Couldn't convert nonexistent user ID ${r.user}"
+          + " to Int index.")
 
         if (iindex == -1)
           logger.info(s"Couldn't convert nonexistent item ID ${r.item}"

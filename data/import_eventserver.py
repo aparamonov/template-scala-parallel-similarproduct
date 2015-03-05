@@ -16,14 +16,6 @@ def import_events(client):
 
   # generate 10 users, with user ids u1,u2,....,u10
   user_ids = ["u%s" % i for i in range(1, 11)]
-  for user_id in user_ids:
-    print "Set user", user_id
-    client.create_event(
-      event="$set",
-      entity_type="user",
-      entity_id=user_id
-    )
-    count += 1
 
   # generate 50 items, with item ids i1,i2,....,i50
   # random assign 1 to 4 categories among c1-c6 to items

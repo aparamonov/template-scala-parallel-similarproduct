@@ -25,23 +25,6 @@ class DataSource(val dsp: DataSourceParams)
   def readTraining(sc: SparkContext): TrainingData = {
     val eventsDb = Storage.getPEvents()
 
-    // create a RDD of (entityID, User)
-    val usersRDD: RDD[(String, User)] = eventsDb.aggregateProperties(
-      appId = dsp.appId,
-      entityType = "user"
-    )(sc).map { case (entityId, properties) =>
-      val user = try {
-        User()
-      } catch {
-        case e: Exception => {
-          logger.error(s"Failed to get properties ${properties} of" +
-            s" user ${entityId}. Exception: ${e}.")
-          throw e
-        }
-      }
-      (entityId, user)
-    }.cache()
-
     // create a RDD of (entityID, Item)
     val itemsRDD: RDD[(String, Item)] = eventsDb.aggregateProperties(
       appId = dsp.appId,
@@ -88,26 +71,21 @@ class DataSource(val dsp: DataSourceParams)
       }.cache()
 
     new TrainingData(
-      users = usersRDD,
       items = itemsRDD,
       viewEvents = viewEventsRDD
     )
   }
 }
 
-case class User()
-
 case class Item(categories: Option[List[String]])
 
 case class ViewEvent(user: String, item: String, t: Long)
 
 class TrainingData(
-  val users: RDD[(String, User)],
   val items: RDD[(String, Item)],
   val viewEvents: RDD[ViewEvent]
 ) extends Serializable {
   override def toString = {
-    s"users: [${users.count()} (${users.take(2).toList}...)]" +
     s"items: [${items.count()} (${items.take(2).toList}...)]" +
     s"viewEvents: [${viewEvents.count()}] (${viewEvents.take(2).toList}...)"
   }
